@@ -1,15 +1,27 @@
-import { useLayoutEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import Button from "../components/UI/Button";
+import { useLayoutEffect, useEffect, useState } from "react";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 import IconButton from "../components/UI/iconButton";
 import { GlobalStyles } from "../constants/styles";
 import { useSelector, useDispatch } from "react-redux";
 import { addExpense, deleteExpense, updateExpense } from "../store/reducers";
+import ExpenseForm from "../components/ManageExpense/ExpenseForm";
+import { storeExpense, updateExpenseBE, deleteExpenseBE } from "../util/http";
+import LoadingOverlay from "../components/UI/LoadingOverlay";
+import ErrorOverlay from "../components/UI/ErrorOverlay";
 
 const colors = GlobalStyles.colors;
 function ManageExpenses({ route, navigation }) {
+  const [isSubmiting, setIsSubmiting] = useState(false);
+  const [shouldRetryRequest, setShouldRetryRequest] = useState(false);
+
+  const [error, setError] = useState();
+
   const dispatch = useDispatch();
   const id = route.params?.expenseId;
+
+  const expenses = useSelector((state) => state.expenses.expenses);
+
+  const expense = expenses.find((expenses) => expenses.id === id);
 
   const isEditing = !!id;
 
@@ -19,47 +31,80 @@ function ManageExpenses({ route, navigation }) {
     });
   }, [navigation, isEditing]);
 
-  function deleteExpenseHandler() {
-    dispatch(deleteExpense(id));
-    navigation.goBack();
+  async function deleteExpenseHandler() {
+    try {
+      await deleteExpenseBE(id);
+      dispatch(deleteExpense(id));
+      navigation.goBack();
+    } catch (error) {
+      setError("Couldn't connect to server.");
+      isSubmiting(false);
+      setShouldRetryRequest(true);
+    }
+  }
+
+  async function confirmHandler(expenseData) {
+    try {
+      if (isEditing) {
+        dispatch(updateExpense({ ...expenseData }));
+        await updateExpenseBE(id, expenseData);
+      } else {
+        const id = await storeExpense(expenseData);
+        dispatch(addExpense({ ...expenseData, id: id }));
+      }
+      navigation.goBack();
+      setIsSubmiting(true);
+    } catch (error) {
+      setError("Couldn't connect to server.");
+      setIsSubmiting(false);
+      setShouldRetryRequest(true);
+    }
   }
 
   function cancelHandler() {
     navigation.goBack();
   }
-  function confirmHandler(params) {
-    if (isEditing) {
-      dispatch(
-        updateExpense({
-          description: "TESSSSTANDO",
-          amount: 4.2,
-          date: new Date("2023-05-29"),
-          id: id,
-        })
-      );
-    } else {
-      dispatch(
-        addExpense({
-          description: "Maiscoisasim",
-          amount: 40.2,
-          date: new Date("2023-05-29"),
-          id: Math.floor(Math.random()).toFixed(4),
-        })
-      );
+
+  function errorHandler() {
+    setError(null);
+    setIsSubmiting(false);
+    setShouldRetryRequest(true);
+    if (!shouldRetryRequest) navigation.goBack();
+  }
+
+  useEffect(() => {
+    if (shouldRetryRequest) {
+      if (isEditing) {
+        confirmHandler(expense);
+      } else {
+        if (id) {
+          deleteExpenseHandler();
+        } else {
+          confirmHandler(expense);
+        }
+      }
+      setShouldRetryRequest(false);
     }
-    navigation.goBack();
+  }, [shouldRetryRequest]);
+
+  if (error && !isSubmiting) {
+    return <ErrorOverlay message={error} onConfirm={errorHandler} />;
+  }
+  if (isSubmiting) {
+    return <LoadingOverlay />;
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.buttons}>
-        <Button style={styles.button} onPress={confirmHandler}>
-          {isEditing ? "Update" : "Add"}{" "}
-        </Button>
-        <Button style={styles.button} mode="flat" onPress={cancelHandler}>
-          Cancel
-        </Button>
-      </View>
+      <ExpenseForm
+        confirmHandler={confirmHandler}
+        submitLabel={isEditing ? "Update" : "Add"}
+        cancelHandler={cancelHandler}
+        onSubmit={confirmHandler}
+        inputData={expense}
+        isEditing={isEditing}
+      />
+
       {isEditing && (
         <View style={styles.deleContainer}>
           <IconButton
@@ -88,14 +133,5 @@ const styles = StyleSheet.create({
     borderTopWidth: 2,
     borderTopColor: colors.primary200,
     alignItems: "center",
-  },
-  buttons: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  button: {
-    minWidht: 120,
-    marginHorizontal: 8,
   },
 });

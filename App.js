@@ -40,22 +40,22 @@ function MyTabs() {
         },
       })}>
       <Tab.Screen
-        name="Recent Expenses"
+        name="All Expenses"
         component={AllExpenses}
         options={{
-          title: "Recent Expenses",
-          tabBarLabel: "Recent",
+          title: "All Expenses",
+          tabBarLabel: "All Expenses",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="hourglass" color={color} size={size} />
           ),
         }}
       />
       <Tab.Screen
-        name="All Expenses"
+        name="Recent Expenses"
         component={RecentExpenses}
         options={{
-          title: "All Expenses",
-          tabBarLabel: "All Expenses",
+          title: "Recent Expense",
+          tabBarLabel: "Recent Expenses",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar" color={color} size={size} />
           ),

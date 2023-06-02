@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 
 function AllExpenses({ navigation }) {
   const expenses = useSelector((state) => state.expenses.expenses);
-
+  // console.log(expenses, "comiassim");
   // console.log(expenses);
   return (
     <ExpensesOutput

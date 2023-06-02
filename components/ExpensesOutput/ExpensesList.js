@@ -6,6 +6,7 @@ const colors = GlobalStyles.colors;
 
 function renderExpenseItem(itemData) {
   const item = itemData.item;
+
   return <ExpenseItem {...item} />;
 }
 

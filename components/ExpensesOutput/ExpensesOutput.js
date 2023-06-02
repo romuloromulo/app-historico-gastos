@@ -1,8 +1,8 @@
 import { View, Text, FlatList, StyleSheet } from "react-native";
 import ExpensesSummary from "./ExpensesSummary";
 import ExpensesList from "./ExpensesList";
-import { GlobalStyles } from "../../constants/styles";
 import { useSelector } from "react-redux";
+import { GlobalStyles } from "../../constants/styles";
 
 const colors = GlobalStyles.colors;
 
